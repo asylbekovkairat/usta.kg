@@ -1,9 +1,6 @@
-"use client";
-import React, { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -11,10 +8,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Phone, Upload } from "lucide-react";
+import React, { FormEvent, useState } from "react";
+
+// Define a type for the form data
+type FormData = {
+  serviceType: string;
+  address: string;
+  description: string;
+  phone: string;
+  photo: File | null;
+  commonProblem: string;
+};
+
+// Define a type for service types
+type ServiceType = {
+  id: string;
+  label: string;
+};
+
+// Define a type for common problems
+type CommonProblems = {
+  [key: string]: string[];
+};
 
 export const ServiceRequestForm = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     serviceType: "",
     address: "",
     description: "",
@@ -23,26 +43,29 @@ export const ServiceRequestForm = () => {
     commonProblem: "",
   });
 
-  const serviceTypes = [
+  const serviceTypes: ServiceType[] = [
     { id: "plumbing", label: "Сантехника" },
     { id: "electrical", label: "Электрика" },
     { id: "locksmith", label: "Слесарь" },
     { id: "carpenter", label: "Плотник" },
   ];
 
-  const commonProblems = {
+  const commonProblems: CommonProblems = {
     plumbing: ["Протечка крана", "Засор канализации", "Замена смесителя"],
     electrical: ["Замена розетки", "Установка люстры", "Короткое замыкание"],
     locksmith: ["Замена замка", "Открытие двери", "Ремонт замка"],
     carpenter: ["Ремонт двери", "Установка полок", "Сборка мебели"],
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const formDataToSend = new FormData();
-      Object.keys(formData).forEach((key) => {
-        formDataToSend.append(key, formData[key]);
+      (Object.keys(formData) as Array<keyof FormData>).forEach((key) => {
+        const value = formData[key];
+        if (value !== null) {
+          formDataToSend.append(key, value as string | Blob);
+        }
       });
 
       const response = await fetch("/api/submit-request", {
@@ -67,8 +90,8 @@ export const ServiceRequestForm = () => {
     }
   };
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0];
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file && file.size <= 5 * 1024 * 1024) {
       // 5MB limit
       setFormData({ ...formData, photo: file });
@@ -87,7 +110,7 @@ export const ServiceRequestForm = () => {
           <div>
             <Select
               value={formData.serviceType}
-              onValueChange={(value) =>
+              onValueChange={(value: string) =>
                 setFormData({ ...formData, serviceType: value })
               }
             >
@@ -108,7 +131,7 @@ export const ServiceRequestForm = () => {
             <div>
               <Select
                 value={formData.commonProblem}
-                onValueChange={(value) =>
+                onValueChange={(value: string) =>
                   setFormData({ ...formData, commonProblem: value })
                 }
               >
@@ -130,7 +153,7 @@ export const ServiceRequestForm = () => {
             <Input
               placeholder="Адрес"
               value={formData.address}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, address: e.target.value })
               }
               required
@@ -141,7 +164,7 @@ export const ServiceRequestForm = () => {
             <Textarea
               placeholder="Описание проблемы"
               value={formData.description}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setFormData({ ...formData, description: e.target.value })
               }
               required
@@ -155,7 +178,7 @@ export const ServiceRequestForm = () => {
               type="tel"
               placeholder="Номер телефона"
               value={formData.phone}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, phone: e.target.value })
               }
               required
